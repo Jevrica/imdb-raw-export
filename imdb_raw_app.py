@@ -1,7 +1,5 @@
-"""IMDb raw data / Streamlit, standalone file.
-Install: python -m pip install streamlit imdbinfo==0.11.0
-Run: python -m streamlit run imdb_raw_app.py
-SQL is generated only. This app never connects to the company database.
+"""
+IMDb raw data
 """
 import argparse
 import csv
@@ -47,14 +45,12 @@ def persons(items):
 
 
 def original_image_url(url):
-    """Remove IMDb's resize/crop suffix while preserving the image identifier."""
     if not isinstance(url, str):
         return None
     return re.sub(r'\._[^/]+(?=\.[A-Za-z0-9]+$)', '', url)
 
 
 def canonical_title(title):
-    """Match the legacy English canonical-title convention for common articles."""
     if not isinstance(title, str):
         return None
     for article in ('The ', 'An ', 'A '):
@@ -64,7 +60,6 @@ def canonical_title(title):
 
 
 def canonical_name(name):
-    """Best-effort legacy canonical name for ordinary Western-style names."""
     if not isinstance(name, str):
         return None
     parts = name.strip().split()
@@ -77,7 +72,6 @@ def canonical_name(name):
 
 
 def legacy_money(value):
-    """Convert imdbinfo's '<amount> <currency>' strings to a readable legacy value."""
     if not isinstance(value, str):
         return None
     match = re.fullmatch(r'\s*(\d+(?:\.\d+)?)\s+([A-Z]{3})\s*', value)
@@ -90,7 +84,6 @@ def legacy_money(value):
 
 
 def enrich_legacy_fields(candidate, source, episodes, notes):
-    """Add fields that can be derived deterministically from collected responses."""
     if source.get('imdbId', '').startswith('nm'):
         name = candidate.get('name')
         canonical = canonical_name(name)
@@ -156,7 +149,6 @@ def enrich_legacy_fields(candidate, source, episodes, notes):
 
 
 def adapt(imdb_id, source, episodes=None):
-    """Return (candidate dict, caveats); no legacy values are copied."""
     if not re.fullmatch(r'(tt|nm)\d+', imdb_id) or source.get('imdbId') != imdb_id:
         raise ValueError('IMDb ID does not match source JSON')
     out = {'imdbID': imdb_id[2:]}
@@ -516,10 +508,9 @@ def insert_sql(imdb_id, raw):
                 check(item)
     check(raw)
     payload = json.dumps(raw, ensure_ascii=False, allow_nan=False)
-    return '''-- Run as a separate transaction in PostgreSQL.
--- New IMDb IDs only. Does not update existing rows or run processors.
--- inserted_rows=1: row inserted; 0: IMDb ID already exists.
--- Timestamps use the database session timezone (LOCALTIMESTAMP).
+    return '''Run as a separate transaction in PostgreSQL.
+New IMDb IDs only. Does not update existing rows or run processors.
+inserted_rows=1: row inserted; 0: IMDb ID already exists.
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 LOCK TABLE public.imdb_raw_data IN SHARE ROW EXCLUSIVE MODE;
@@ -539,7 +530,6 @@ COMMIT;
 
 
 def run_worker(imdb_id):
-    """Separate process bounds network waits and keeps Streamlit responsive."""
     import subprocess, sys, tempfile, time
     import streamlit as st
     with tempfile.TemporaryDirectory(prefix='imdb_app_') as directory:
