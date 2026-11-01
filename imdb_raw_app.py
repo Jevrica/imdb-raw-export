@@ -426,8 +426,8 @@ def collect_result(imdb_id, progress=print):
     from importlib.metadata import version
     from imdbinfo import get_movie, get_name, get_all_episodes
     from imdbinfo.services import request_graphql_url, GRAPHQL_URL
-    if version('imdbinfo') != '0.11.0':
-        raise ValueError('Use the tested version: python -m pip install imdbinfo==0.11.0')
+    if version('imdbinfo') != '0.15.0':
+        raise ValueError('Use the tested version: python -m pip install imdbinfo==0.15.0')
     steps, sources = [], {}
     progress('Basic data: ' + imdb_id)
     model = (get_name if imdb_id.startswith('nm') else get_movie)(imdb_id, locale='en')
