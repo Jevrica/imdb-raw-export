@@ -425,12 +425,14 @@ def build_result(imdb_id, source, episodes, extra, steps, sources):
 def collect_result(imdb_id, progress=print):
     from importlib.metadata import version
     from imdbinfo import get_movie, get_name, get_all_episodes
+    from imdbinfo.locale import set_locale
     from imdbinfo.services import request_graphql_url, GRAPHQL_URL
-    if version('imdbinfo') != '0.15.0':
-        raise ValueError('Use the tested version: python -m pip install imdbinfo==0.15.0')
+    if version('imdbinfo') != '0.16.0':
+        raise ValueError('Use the tested version: python -m pip install imdbinfo==0.16.0')
+    set_locale('en')
     steps, sources = [], {}
     progress('Basic data: ' + imdb_id)
-    model = (get_name if imdb_id.startswith('nm') else get_movie)(imdb_id, locale='en')
+    model = (get_name if imdb_id.startswith('nm') else get_movie)(imdb_id)
     if model is None:
         raise ValueError('IMDb returned no title/person')
     source = model.model_dump(mode='json')
@@ -468,7 +470,7 @@ def collect_result(imdb_id, progress=print):
         if source.get('kind') in ('tvSeries', 'tvMiniSeries'):
             try:
                 progress('Series episodes')
-                episodes = [x.model_dump(mode='json') for x in get_all_episodes(imdb_id, locale='en')]
+                episodes = [x.model_dump(mode='json') for x in get_all_episodes(imdb_id)]
                 sources['episodes'] = episodes
                 total_data = request('query N($id:ID!){title(id:$id){episodes{episodes(first:1){total}}}}', {'id': imdb_id})
                 extra['results']['series'] = total_data
